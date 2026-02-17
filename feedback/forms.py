@@ -9,6 +9,13 @@ class FeedbackForm(forms.ModelForm):
     """
     Форма для создания отзыва через веб-интерфейс
     """
+    rating = forms.ChoiceField(
+        choices=[(i, str(i)) for i in range(1, 6)],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label='Оценка',
+        help_text='Выберите оценку от 1 до 5 звезд'
+    )
+    
     class Meta:
         model = Feedback
         fields = ['client_name', 'client_email', 'client_phone', 'rating', 'category', 'text']
@@ -26,9 +33,6 @@ class FeedbackForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': '+7 (XXX) XXX-XX-XX (необязательно)'
             }),
-            'rating': forms.RadioSelect(attrs={
-                'class': 'form-check-input'
-            }),
             'category': forms.Select(attrs={
                 'class': 'form-select'
             }),
@@ -43,12 +47,10 @@ class FeedbackForm(forms.ModelForm):
             'client_name': 'Ваше имя',
             'client_email': 'Email (необязательно)',
             'client_phone': 'Телефон (необязательно)',
-            'rating': 'Оценка',
             'category': 'Категория',
             'text': 'Текст отзыва'
         }
         help_texts = {
-            'rating': 'Выберите оценку от 1 до 5 звезд',
             'category': 'Выберите наиболее подходящую категорию',
         }
 
