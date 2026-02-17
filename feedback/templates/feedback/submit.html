@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Оставить отзыв - Команда Ф5{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4">
+                    <i class="bi bi-chat-left-text text-primary"></i>
+                    Оставьте ваш отзыв
+                </h2>
+                <p class="text-muted text-center mb-4">
+                    Мы ценим ваше мнение и стремимся улучшать качество наших услуг
+                </p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Имя клиента -->
+                    <div class="mb-3">
+                        <label for="{{ form.client_name.id_for_label }}" class="form-label">
+                            {{ form.client_name.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.client_name }}
+                        {% if form.client_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.client_name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="{{ form.client_email.id_for_label }}" class="form-label">
+                            {{ form.client_email.label }}
+                        </label>
+                        {{ form.client_email }}
+                        {% if form.client_email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.client_email.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Телефон -->
+                    <div class="mb-3">
+                        <label for="{{ form.client_phone.id_for_label }}" class="form-label">
+                            {{ form.client_phone.label }}
+                        </label>
+                        {{ form.client_phone }}
+                        {% if form.client_phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.client_phone.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Оценка -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            {{ form.rating.label }} <span class="text-danger">*</span>
+                        </label>
+                        <div class="star-rating">
+                            {% for value, label in form.fields.rating.choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" 
+                                           name="rating" id="rating_{{ value }}" 
+                                           value="{{ value }}" {% if form.rating.value == value|stringformat:"s" %}checked{% endif %}>
+                                    <label class="form-check-label" for="rating_{{ value }}">
+                                        {{ value }} <i class="bi bi-star-fill text-warning"></i>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted">{{ form.rating.help_text }}</small>
+                        {% if form.rating.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.rating.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Категория -->
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            {{ form.category.label }}
+                        </label>
+                        {{ form.category }}
+                        <small class="form-text text-muted">{{ form.category.help_text }}</small>
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.category.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Текст отзыва -->
+                    <div class="mb-3">
+                        <label for="{{ form.text.id_for_label }}" class="form-label">
+                            {{ form.text.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.text }}
+                        {% if form.text.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.text.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Кнопка отправки -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send"></i> Отправить отзыв
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Информация -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Информация
+                </h5>
+                <p class="card-text mb-0">
+                    <small class="text-muted">
+                        Ваш отзыв поможет нам стать лучше. Мы внимательно изучаем все полученные отзывы 
+                        и стараемся учитывать мнение каждого клиента при улучшении наших услуг.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Список отзывов - Команда Ф5{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">
+    <i class="bi bi-list-ul"></i> Список отзывов
+</h2>
+
+<!-- Фильтры и поиск -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Поиск</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search }}" placeholder="Имя, email или текст...">
+            </div>
+            <div class="col-md-2">
+                <label for="category" class="form-label">Категория</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Все</option>
+                    {% for value, label in categories %}
+                        <option value="{{ value }}" {% if filters.category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sentiment" class="form-label">Тональность</label>
+                <select class="form-select" id="sentiment" name="sentiment">
+                    <option value="">Все</option>
+                    {% for value, label in sentiments %}
+                        <option value="{{ value }}" {% if filters.sentiment == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="source" class="form-label">Источник</label>
+                <select class="form-select" id="source" name="source">
+                    <option value="">Все</option>
+                    {% for value, label in sources %}
+                        <option value="{{ value }}" {% if filters.source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="is_processed" class="form-label">Статус</label>
+                <select class="form-select" id="is_processed" name="is_processed">
+                    <option value="">Все</option>
+                    <option value="true" {% if filters.is_processed == 'true' %}selected{% endif %}>Обработанные</option>
+                    <option value="false" {% if filters.is_processed == 'false' %}selected{% endif %}>Необработанные</option>
+                </select>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Поиск
+                </button>
+                <a href="{% url 'feedback_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Таблица отзывов -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Клиент</th>
+                        <th>Оценка</th>
+                        <th>Категория</th>
+                        <th>Тональность</th>
+                        <th>Источник</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feedback in feedbacks %}
+                    <tr>
+                        <td>{{ feedback.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <strong>{{ feedback.client_name }}</strong><br>
+                            <small class="text-muted">{{ feedback.client_email|default:"-" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning text-dark">
+                                {{ feedback.rating }} <i class="bi bi-star-fill"></i>
+                            </span>
+                        </td>
+                        <td>{{ feedback.get_category_display }}</td>
+                        <td>
+                            {% if feedback.sentiment == 'POSITIVE' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-emoji-smile"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% elif feedback.sentiment == 'NEGATIVE' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-emoji-frown"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-emoji-neutral"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if feedback.source == 'WEB' %}
+                                <i class="bi bi-globe text-primary"></i> Веб
+                            {% else %}
+                                <i class="bi bi-telegram text-info"></i> Telegram
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if feedback.is_processed %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Обработан
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> Ожидает
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'feedback_detail' feedback.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> Просмотр
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i><br>
+                            Отзывов не найдено
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Пагинация -->
+{% if is_paginated %}
+<nav aria-label="Навигация по страницам" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if filters.category %}&category={{ filters.category }}{% endif %}{% if filters.sentiment %}&sentiment={{ filters.sentiment }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.is_processed %}&is_processed={{ filters.is_processed }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if filters.category %}&category={{ filters.category }}{% endif %}{% if filters.sentiment %}&sentiment={{ filters.sentiment }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.is_processed %}&is_processed={{ filters.is_processed }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if filters.category %}&category={{ filters.category }}{% endif %}{% if filters.sentiment %}&sentiment={{ filters.sentiment }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.is_processed %}&is_processed={{ filters.is_processed }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if filters.category %}&category={{ filters.category }}{% endif %}{% if filters.sentiment %}&sentiment={{ filters.sentiment }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.is_processed %}&is_processed={{ filters.is_processed }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
