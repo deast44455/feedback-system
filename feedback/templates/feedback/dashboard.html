@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+
+{% block title %}Дашборд - Команда Ф5{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">
+    <i class="bi bi-graph-up"></i> Дашборд - Статистика отзывов
+</h2>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            <i class="bi bi-funnel"></i> Фильтры
+        </h5>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">Дата с</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ filters.date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">Дата по</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ filters.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label for="category" class="form-label">Категория</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Все</option>
+                    {% for value, label in categories %}
+                        <option value="{{ value }}" {% if filters.category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sentiment" class="form-label">Тональность</label>
+                <select class="form-select" id="sentiment" name="sentiment">
+                    <option value="">Все</option>
+                    {% for value, label in sentiments %}
+                        <option value="{{ value }}" {% if filters.sentiment == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="source" class="form-label">Источник</label>
+                <select class="form-select" id="source" name="source">
+                    <option value="">Все</option>
+                    {% for value, label in sources %}
+                        <option value="{{ value }}" {% if filters.source == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Применить
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Общая статистика -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-chat-square-text"></i> Всего отзывов
+                </h5>
+                <h2 class="mb-0">{{ total_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-star"></i> Средняя оценка
+                </h5>
+                <h2 class="mb-0">{{ average_rating }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-emoji-smile"></i> Позитивные
+                </h6>
+                <h3 class="mb-0">{{ positive_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-emoji-neutral"></i> Нейтральные
+                </h6>
+                <h3 class="mb-0">{{ neutral_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-emoji-frown"></i> Негативные
+                </h6>
+                <h3 class="mb-0">{{ negative_count }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Графики -->
+<div class="row mb-4">
+    <!-- Динамика отзывов -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up-arrow"></i> Динамика отзывов (последние 30 дней)
+                </h5>
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Распределение оценок -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-bar-chart"></i> Распределение оценок
+                </h5>
+                <canvas id="ratingsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Распределение по категориям -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-pie-chart"></i> Распределение по категориям
+                </h5>
+                <canvas id="categoriesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Распределение по тональности -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-pie-chart-fill"></i> Распределение по тональности
+                </h5>
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Распределение по источникам -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-diagram-3"></i> Распределение по источникам
+                </h5>
+                <canvas id="sourcesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Данные из контекста Django
+const timelineData = {{ timeline_data|safe }};
+const categoryStats = {{ category_stats|safe }};
+const sourceStats = {{ source_stats|safe }};
+const ratingStats = {{ rating_stats|safe }};
+
+// График динамики отзывов
+const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+new Chart(timelineCtx, {
+    type: 'line',
+    data: {
+        labels: timelineData.map(d => d.date),
+        datasets: [{
+            label: 'Количество отзывов',
+            data: timelineData.map(d => d.count),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: true
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// График распределения оценок
+const ratingsCtx = document.getElementById('ratingsChart').getContext('2d');
+new Chart(ratingsCtx, {
+    type: 'bar',
+    data: {
+        labels: ratingStats.map(r => r.rating + ' ★'),
+        datasets: [{
+            label: 'Количество отзывов',
+            data: ratingStats.map(r => r.count),
+            backgroundColor: [
+                'rgba(220, 53, 69, 0.6)',
+                'rgba(255, 193, 7, 0.6)',
+                'rgba(13, 110, 253, 0.6)',
+                'rgba(25, 135, 84, 0.6)',
+                'rgba(40, 167, 69, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Категории - перевод
+const categoryLabels = {
+    'QUALITY': 'Качество продукта',
+    'SERVICE': 'Обслуживание',
+    'PRICE': 'Цены',
+    'DELIVERY': 'Доставка',
+    'OTHER': 'Прочее'
+};
+
+// График по категориям
+const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+new Chart(categoriesCtx, {
+    type: 'pie',
+    data: {
+        labels: categoryStats.map(c => categoryLabels[c.category] || c.category),
+        datasets: [{
+            data: categoryStats.map(c => c.count),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// График по тональности
+const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+new Chart(sentimentCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Позитивные', 'Нейтральные', 'Негативные'],
+        datasets: [{
+            data: [{{ positive_count }}, {{ neutral_count }}, {{ negative_count }}],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.6)',
+                'rgba(255, 193, 7, 0.6)',
+                'rgba(220, 53, 69, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Источники - перевод
+const sourceLabels = {
+    'WEB': 'Веб-форма',
+    'TELEGRAM': 'Telegram'
+};
+
+// График по источникам
+const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
+new Chart(sourcesCtx, {
+    type: 'pie',
+    data: {
+        labels: sourceStats.map(s => sourceLabels[s.source] || s.source),
+        datasets: [{
+            data: sourceStats.map(s => s.count),
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.6)',
+                'rgba(0, 136, 204, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

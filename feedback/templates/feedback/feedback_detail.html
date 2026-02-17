@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Отзыв #{{ feedback.id }} - Команда Ф5{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Информация об отзыве -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-chat-square-text"></i> Отзыв #{{ feedback.id }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-person"></i> Информация о клиенте</h6>
+                        <p class="mb-1"><strong>Имя:</strong> {{ feedback.client_name }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ feedback.client_email|default:"Не указан" }}</p>
+                        <p class="mb-1"><strong>Телефон:</strong> {{ feedback.client_phone|default:"Не указан" }}</p>
+                        {% if feedback.telegram_user_id %}
+                        <p class="mb-1"><strong>Telegram ID:</strong> {{ feedback.telegram_user_id }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-info-circle"></i> Детали отзыва</h6>
+                        <p class="mb-1">
+                            <strong>Оценка:</strong>
+                            <span class="badge bg-warning text-dark">
+                                {{ feedback.rating }} <i class="bi bi-star-fill"></i>
+                            </span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Категория:</strong> {{ feedback.get_category_display }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Тональность:</strong>
+                            {% if feedback.sentiment == 'POSITIVE' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-emoji-smile"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% elif feedback.sentiment == 'NEGATIVE' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-emoji-frown"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-emoji-neutral"></i> {{ feedback.get_sentiment_display }}
+                                </span>
+                            {% endif %}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Источник:</strong>
+                            {% if feedback.source == 'WEB' %}
+                                <i class="bi bi-globe text-primary"></i> Веб-форма
+                            {% else %}
+                                <i class="bi bi-telegram text-info"></i> Telegram
+                            {% endif %}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Дата создания:</strong> {{ feedback.created_at|date:"d.m.Y H:i" }}
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6><i class="bi bi-chat-left-text"></i> Текст отзыва</h6>
+                <div class="alert alert-light">
+                    {{ feedback.text }}
+                </div>
+
+                {% if feedback.response %}
+                <hr>
+                <h6><i class="bi bi-reply"></i> Ответ на отзыв</h6>
+                <div class="alert alert-info">
+                    {{ feedback.response }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="{% url 'feedback_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Форма ответа -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Обработка отзыва
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.response.id_for_label }}" class="form-label">
+                            {{ form.response.label }}
+                        </label>
+                        {{ form.response }}
+                        {% if form.response.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.response.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_processed }}
+                            <label class="form-check-label" for="{{ form.is_processed.id_for_label }}">
+                                {{ form.is_processed.label }}
+                            </label>
+                        </div>
+                        {% if form.is_processed.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_processed.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Сохранить
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Информация об обработке -->
+        {% if feedback.is_processed %}
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-check-circle text-success"></i> Статус обработки
+                </h6>
+                <p class="mb-1">
+                    <strong>Обработан:</strong>
+                    <span class="badge bg-success">Да</span>
+                </p>
+                {% if feedback.processed_by %}
+                <p class="mb-1">
+                    <strong>Обработал:</strong> {{ feedback.processed_by.username }}
+                </p>
+                {% endif %}
+                <p class="mb-0">
+                    <strong>Обновлен:</strong> {{ feedback.updated_at|date:"d.m.Y H:i" }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
